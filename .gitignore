@@ -1,0 +1,30 @@
+# Environment & Secrets
+.env
+*.env.local
+*.pem
+*.key
+*.token
+
+# Python Virtual Environments & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+
+# Change Management Local Data & Snapshots
+governance/snapshots/
+governance/knowledge_graph/
+governance/change_registry.json
+
+# Logs & Temporary Files
+*.log
+*.pid
+tmp/
+scratch/
+
+# Node.js & Ruang local builds
+node_modules/
+dist/
+.DS_Store

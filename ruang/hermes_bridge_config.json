@@ -1,0 +1,57 @@
+{
+  "system": "Omni-Agent Operating System",
+  "version": "1.0.0",
+  "ruang_port": 3001,
+  "refresh_interval_ms": 3000,
+  "monitored_agents": [
+    {
+      "id": "agent-governance-director",
+      "name": "Director",
+      "role": "Chief AI Governance & Operations Director",
+      "desk_slot": 1,
+      "color": "#6366f1"
+    },
+    {
+      "id": "agent-dev-lead-architect",
+      "name": "Lead Arsitek",
+      "role": "Master Technical Lead & Core Gateway",
+      "desk_slot": 2,
+      "color": "#a855f7"
+    },
+    {
+      "id": "tim-ai-finops",
+      "name": "Analis Token",
+      "role": "Cognitive Evaluator & 4 Velocity SLAs",
+      "desk_slot": 3,
+      "color": "#10b981"
+    },
+    {
+      "id": "tim-change-management",
+      "name": "Change Management",
+      "role": "RFC, Snapshot & Auto-Rollback Lead",
+      "desk_slot": 4,
+      "color": "#0284c7"
+    },
+    {
+      "id": "tim-qa-testing",
+      "name": "SIT/UAT QA",
+      "role": "Zero-Defect ECC Test Harness",
+      "desk_slot": 5,
+      "color": "#f43f5e"
+    },
+    {
+      "id": "tim-uiux-spatial",
+      "name": "Design UI/UX",
+      "role": "Bento Grid & Spatial Layout Engineer",
+      "desk_slot": 6,
+      "color": "#06b6d4"
+    },
+    {
+      "id": "tim-ruang-virtual",
+      "name": "Ruang 3D",
+      "role": "Virtual Office & Digital Twin Manager",
+      "desk_slot": 7,
+      "color": "#f59e0b"
+    }
+  ]
+}

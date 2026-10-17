@@ -1,0 +1,15 @@
+[Unit]
+Description=Omni-Agent OS Master Portal & API Gateway
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/omni-agent-os/portal
+ExecStart=/usr/bin/python3 %h/omni-agent-os/portal/server.py
+Restart=always
+RestartSec=3
+Environment=PORTAL_PORT=7777
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=default.target
