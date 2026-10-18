@@ -25,6 +25,7 @@ SERVER_FILE = os.path.join(BASE_DIR, 'portal', 'server.py')
 INDEX_FILE = os.path.join(BASE_DIR, 'portal', 'static', 'index.html')
 CHANGE_MGR_FILE = os.path.join(BASE_DIR, 'governance', 'change_manager.py')
 TOKEN_ANALYZER_FILE = os.path.join(BASE_DIR, 'governance', 'token_analyzer.py')
+SYNTHESIZE_FILE = os.path.join(BASE_DIR, 'skills', 'report-mimic-synthesizer', 'scripts', 'synthesize_report.py')
 PORTAL_URL = f"http://127.0.0.1:{os.getenv('PORTAL_PORT', '7777')}"
 
 GREEN = "\033[92m"
@@ -53,7 +54,12 @@ def record_test(gate_name, test_name, passed, detail=""):
 def run_gate_1_syntax():
     print(f"\n{CYAN}{BOLD}[GATE 1] Static Code Integrity & Syntax Check (L1){RESET}")
     # 1. Compile Python Files
-    for name, fpath in [("server.py", SERVER_FILE), ("change_manager.py", CHANGE_MGR_FILE), ("token_analyzer.py", TOKEN_ANALYZER_FILE)]:
+    for name, fpath in [
+        ("server.py", SERVER_FILE),
+        ("change_manager.py", CHANGE_MGR_FILE),
+        ("token_analyzer.py", TOKEN_ANALYZER_FILE),
+        ("synthesize_report.py", SYNTHESIZE_FILE)
+    ]:
         try:
             py_compile.compile(fpath, doraise=True)
             record_test("Gate 1", f"{name} Python Syntax", True, "(0 syntax errors)")

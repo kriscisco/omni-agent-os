@@ -82,7 +82,8 @@ omni-agent-os/
 │   ├── zero-defect-ecc-testing/
 │   ├── enterprise-change-enablement/
 │   ├── bento-uiux-spatial-design/
-│   └── ruang-3d-virtual-office/
+│   ├── ruang-3d-virtual-office/
+│   └── report-mimic-synthesizer/       # 📄 Peniru Laporan Acuan & Multi-Data Synthesizer
 │
 ├── governance/                         # ENGINE TATA KELOLA & FINOPS
 │   ├── change_manager.py               # RFC, Snapshot & Disaster Auto-Rollback
@@ -157,6 +158,18 @@ Isi fungsi bisnis Anda, dan agen tersebut langsung mewarisi:
 - Perlindungan **Auto-Rollback** jika eksekusi error.
 - Evaluasi token otomatis dari **Analis Token**.
 - Tampil di **Bento Grid Dashboard** dan **Ruang 3D**.
+
+---
+
+## 📄 Cara Menggunakan Report Mimic & Data Synthesizer
+
+Menyusun laporan baru secara otomatis yang meniru format laporan lama dari kombinasi beberapa file data:
+```bash
+python3 skills/report-mimic-synthesizer/scripts/synthesize_report.py \
+  --reference "skills/report-mimic-synthesizer/examples/sample_reference_report.md" \
+  --data-sources "skills/report-mimic-synthesizer/examples/sample_sales_data.csv" "skills/report-mimic-synthesizer/examples/sample_customer_feedback.json" \
+  --output "laporan_hasil_sintesis.md"
+```
 
 ---
 
