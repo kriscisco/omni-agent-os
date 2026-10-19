@@ -4,6 +4,9 @@ build_bims_docx.py
 Generates an editable, professionally formatted Word (.docx) document
 for the BIMS / Rekapitulasi Budget FR - Estate Penetration Testing Report,
 matching the bilingual format and executive styling of Lentera Teknologi.
+
+Includes ECMA-376 schema sanitization to ensure 100% compatibility with
+Microsoft Word on macOS / Windows and Apple Pages.
 """
 
 import sys
@@ -15,10 +18,43 @@ from docx.enum.table import WD_TABLE_ALIGNMENT, WD_ALIGN_VERTICAL
 from docx.oxml import OxmlElement, parse_xml
 from docx.oxml.ns import nsdecls, qn
 
+TC_TAG_ORDER = [
+    'cnfStyle', 'tcW', 'gridSpan', 'hMerge', 'vMerge', 'tcBorders', 'shd',
+    'noWrap', 'tcMar', 'textDirection', 'tcFitText', 'vAlign', 'hideMark',
+    'headers', 'cellIns', 'cellDel', 'cellMerge', 'tcPrChange'
+]
+
+TBL_TAG_ORDER = [
+    'tblStyle', 'tblpPr', 'tblOverlap', 'bidiVisual', 'tblStyleRowBandSize',
+    'tblStyleColBandSize', 'tblW', 'jc', 'tblCellSpacing', 'tblInd',
+    'tblBorders', 'shd', 'tblLayout', 'tblCellMar', 'tblLook',
+    'tblCaption', 'tblDescription'
+]
+
+def sort_elem(elem, order):
+    """Sorts XML children according to strict OpenXML schema sequences."""
+    def key_fn(c):
+        tag = c.tag.split('}')[-1]
+        return order.index(tag) if tag in order else 999
+    sorted_c = sorted(list(elem), key=key_fn)
+    for c in list(elem):
+        elem.remove(c)
+    for c in sorted_c:
+        elem.append(c)
+
+def sanitize_openxml(doc):
+    """Enforces ECMA-376 schema compliance across all tables and cells."""
+    for table in doc.tables:
+        if hasattr(table._tbl, 'tblPr') and table._tbl.tblPr is not None:
+            sort_elem(table._tbl.tblPr, TBL_TAG_ORDER)
+        for row in table.rows:
+            for cell in row.cells:
+                tc_pr = cell._tc.get_or_add_tcPr()
+                sort_elem(tc_pr, TC_TAG_ORDER)
+
 def set_cell_background(cell, hex_color):
     """Sets the background color of a table cell."""
     tc_pr = cell._tc.get_or_add_tcPr()
-    # Remove existing shd if any
     for child in list(tc_pr):
         if child.tag.endswith('shd'):
             tc_pr.remove(child)
@@ -59,7 +95,6 @@ def add_bilingual_section(doc, en_paragraphs, id_paragraphs, en_header="English"
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
     table.autofit = False
     
-    # 7.5 inches printable width total -> 3.75 in each
     col_width = Inches(3.75)
     for row in table.rows:
         for cell in row.cells:
@@ -97,7 +132,6 @@ def add_bilingual_section(doc, en_paragraphs, id_paragraphs, en_header="English"
         p.paragraph_format.space_after = Pt(4)
         p.paragraph_format.line_spacing = 1.15
         p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-        # Parse simple bold markdown
         format_runs(p, p_text)
 
     cell_id_c = table.cell(1, 1)
@@ -116,7 +150,6 @@ def add_bilingual_section(doc, en_paragraphs, id_paragraphs, en_header="English"
 def format_runs(paragraph, text):
     """Parses simple inline bold markers (**text**) and code markers (`code`)."""
     import re
-    # Split by bold or code tokens
     parts = re.split(r'(\*\*.*?\*\*|`.*?`)', text)
     for part in parts:
         if not part:
@@ -277,7 +310,6 @@ def generate_docx(output_path):
     set_table_borders(meta_table, color="CBD5E1", sz="4")
     doc.add_paragraph().paragraph_format.space_after = Pt(8)
 
-    # Helper for Section Titles
     def add_section_h1(title):
         p = doc.add_paragraph()
         p.paragraph_format.space_before = Pt(10)
@@ -300,9 +332,7 @@ def generate_docx(output_path):
         run.font.size = Pt(9.5)
         run.font.color.rgb = RGBColor(0x1E, 0x29, 0x3B)
 
-    # -------------------------------------------------------------
     # 1. EXECUTIVE SUMMARY
-    # -------------------------------------------------------------
     add_section_h1("1. EXECUTIVE SUMMARY / RINGKASAN EKSEKUTIF")
     en_exec = [
         "On 18 October 2026, a focused, non-destructive internal web penetration test was conducted against the **BIMS (Budget Information Management System) / Rekapitulasi Budget FR - Estate** web application.",
@@ -320,9 +350,7 @@ def generate_docx(output_path):
     ]
     add_bilingual_section(doc, en_exec, id_exec)
 
-    # -------------------------------------------------------------
     # 2. TARGET SYSTEM & ASSESSMENT PARAMETERS
-    # -------------------------------------------------------------
     add_section_h1("2. TARGET SYSTEM & ASSESSMENT PARAMETERS")
     en_params = [
         "**Target 1 (Public Hostname):** `https://rekapbudget-estate.first-resources.com`\n• DNS CNAME: `lkt-infra.first-resources.com` -> `10.100.2.64`\n• Stack: Nginx Reverse Proxy, HTTP/2 over TLS 1.3/1.2\n• Certificate: `*.first-resources.com` (Sectigo CA DV R36, valid 2026-06-29 to 2027-01-13)",
@@ -336,9 +364,7 @@ def generate_docx(output_path):
     ]
     add_bilingual_section(doc, en_params, id_params)
 
-    # -------------------------------------------------------------
     # 3. METHODOLOGY
-    # -------------------------------------------------------------
     add_section_h1("3. TESTING METHODOLOGY / METODOLOGI")
     en_meth = [
         "**1. Passive Reconnaissance:** DNS resolution, HTTP-to-HTTPS redirect validation, TLS chain verification, and metadata checks (`/robots.txt`, `/.well-known/security.txt`).",
@@ -354,16 +380,13 @@ def generate_docx(output_path):
     ]
     add_bilingual_section(doc, en_meth, id_meth)
 
-    # -------------------------------------------------------------
     # 4. RISK MATRIX & FINDINGS OVERVIEW
-    # -------------------------------------------------------------
     add_section_h1("4. RISK MATRIX & FINDINGS OVERVIEW / MATRIKS RISIKO & TEMUAN")
     matrix_table = doc.add_table(rows=6, cols=4)
     matrix_table.alignment = WD_TABLE_ALIGNMENT.CENTER
     matrix_table.autofit = False
     
     col_widths = [Inches(0.8), Inches(3.6), Inches(1.1), Inches(2.0)]
-    
     headers = ["Finding ID", "Security Issue / Isu Keamanan", "Severity", "Status / Verification Note"]
     for j, h in enumerate(headers):
         c = matrix_table.cell(0, j)
@@ -389,8 +412,6 @@ def generate_docx(output_path):
 
     for i, (fid, title, sev, bg_color, text_color, status) in enumerate(m_rows, start=1):
         row = matrix_table.rows[i]
-        
-        # ID
         c0 = row.cells[0]
         c0.width = col_widths[0]
         set_cell_background(c0, bg_color)
@@ -403,7 +424,6 @@ def generate_docx(output_path):
         r0.font.name = "Arial"
         r0.font.size = Pt(8.5)
 
-        # Title
         c1 = row.cells[1]
         c1.width = col_widths[1]
         set_cell_background(c1, bg_color)
@@ -422,7 +442,6 @@ def generate_docx(output_path):
         r1b.font.size = Pt(7.5)
         r1b.font.color.rgb = RGBColor(0x64, 0x74, 0x8B)
 
-        # Severity
         c2 = row.cells[2]
         c2.width = col_widths[2]
         set_cell_background(c2, bg_color)
@@ -435,11 +454,9 @@ def generate_docx(output_path):
         r2.bold = True
         r2.font.name = "Arial"
         r2.font.size = Pt(8.5)
-        # Parse hex color
         rgb = tuple(int(text_color[k:k+2], 16) for k in (0, 2, 4))
         r2.font.color.rgb = RGBColor(*rgb)
 
-        # Status
         c3 = row.cells[3]
         c3.width = col_widths[3]
         set_cell_background(c3, bg_color)
@@ -460,9 +477,7 @@ def generate_docx(output_path):
     set_table_borders(matrix_table, color="CBD5E1", sz="4")
     doc.add_paragraph().paragraph_format.space_after = Pt(8)
 
-    # -------------------------------------------------------------
     # 5. DETAILED FINDINGS BREAKDOWN
-    # -------------------------------------------------------------
     add_section_h1("5. DETAILED FINDINGS BREAKDOWN / RINCIAN TEMUAN")
 
     # F-01
@@ -532,9 +547,7 @@ def generate_docx(output_path):
     ]
     add_bilingual_section(doc, en_f03, id_f03)
 
-    # -------------------------------------------------------------
     # 6. OBSERVATIONS & 7. VERIFIED CONTROLS
-    # -------------------------------------------------------------
     add_section_h1("6. ADDITIONAL SECURITY OBSERVATIONS & TELEMETRY")
     en_obs = [
         "**O-01 (Server Banner Disclosure):** The public endpoint exposes `Server: nginx` while the internal endpoint exposes `Server: RBFR`. Although build versions are not displayed, disclosing software names aids attacker fingerprinting.",
@@ -615,9 +628,7 @@ def generate_docx(output_path):
     set_table_borders(ctrl_table, color="CBD5E1", sz="4")
     doc.add_paragraph().paragraph_format.space_after = Pt(8)
 
-    # -------------------------------------------------------------
     # 8. LIMITATIONS & UNTESTED ITEMS
-    # -------------------------------------------------------------
     add_section_h1("8. TESTING LIMITATIONS & UNTESTED BOUNDARIES / BATASAN PENGUJIAN")
     en_lim = [
         "• **Linear Single-Pass Constraint:** Conducted under strict anti-loop execution guidelines (max 1 probe per tool, no retries, no deep recursion).",
@@ -635,9 +646,7 @@ def generate_docx(output_path):
     ]
     add_bilingual_section(doc, en_lim, id_lim)
 
-    # -------------------------------------------------------------
     # 9. REMEDIATION ROADMAP & 10. CONCLUSION
-    # -------------------------------------------------------------
     add_section_h1("9. ACTIONABLE REMEDIATION ROADMAP / PANDUAN PERBAIKAN")
     en_road = [
         "**1. Decommission or Proxy Plaintext HTTP Port 1627** — Priority: **HIGH**\nRebind internal BIMS service to `127.0.0.1:1627` and enforce access through an authoritative HTTPS reverse proxy. Enforce host firewall rules blocking cross-VLAN traffic and rotate credentials used across internal tests.",
@@ -696,8 +705,11 @@ def generate_docx(output_path):
 
     set_table_borders(sign_table, color="CBD5E1", sz="4")
     
+    # Sanitize OpenXML element ordering
+    sanitize_openxml(doc)
+    
     doc.save(output_path)
-    print(f"[OK] Report DOCX successfully generated at: {output_path}")
+    print(f"[OK] Report DOCX successfully generated and sanitized at: {output_path}")
 
 if __name__ == '__main__':
     out_docx = sys.argv[1] if len(sys.argv) > 1 else "/home/kristian.admin/.gemini/antigravity-cli/brain/18c205a4-661a-4e83-9dfb-8f26c11d7987/BIMS_REKAP_BUDGET_FR_PENETRATION_TESTING_REPORT.docx"
